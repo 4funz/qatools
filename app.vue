@@ -1,13 +1,30 @@
 <template>
   <div class="container">
     <div class="button-column">
-      <!-- <h4>Button Groups</h4> -->
-      <div v-for="(buttons, groupName) in buttonGroups" :key="groupName">
+      <!-- Search Container -->
+      <div class="search-container">
+        <!-- Search Input -->
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search buttons..."
+          class="search-input"
+        />
+        <!-- Clear Search Button ('x' icon) -->
+        <button v-if="searchQuery" @click="clearSearch" class="clear-search-btn">x</button>
+      </div>
+
+      <!-- Show message when no results are found -->
+      <div v-if="Object.keys(filteredButtonGroups).length === 0" class="no-results-message">
+        No results found.
+      </div>
+
+      <div v-for="(buttons, groupName) in filteredButtonGroups" :key="groupName">
         <h5>{{ groupName }}</h5>
         <div class="button-group">
-          <button 
-            v-for="button in buttons" 
-            :key="button.value" 
+          <button
+            v-for="button in buttons"
+            :key="button.value"
             :class="['btn', { 'selected': selectedLabels.includes(button.value) }]"
             @click="toggleLabel(button.value)"
           >
@@ -19,50 +36,51 @@
 
     <div class="output-column">
       <div>
-        <h3>THEME Values:</h3>
+        <h3>THEME values:</h3>
         <textarea :value="selectedThemeValuesString" readonly></textarea>
-        <button @click="copyToClipboard(selectedThemeValuesString)">Copy to Clipboard</button>
+        <button @click="copyToClipboard(selectedThemeValuesString)">
+          Copy to Clipboard
+        </button>
       </div>
 
       <div>
-        <h3>DEPLOY Values:</h3>
-        <textarea 
-          v-model="deployInput" 
+        <h3>DEPLOY values:</h3>
+        <textarea
+          v-model="deployInput"
           @input="processDeployInput"
-          :class="{'invalid-input': hasInvalidInput}" 
-          ref="deployTextarea">
-        </textarea>
+          :class="{'invalid-input': hasInvalidInput}"
+          ref="deployTextarea"
+        ></textarea>
         <button @click="copyToClipboard(deployInput)">Copy to Clipboard</button>
       </div>
+      <Toast />
     </div>
-    <Toast />
   </div>
 </template>
-
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { mappings } from './data/mappings';
+import { ref, computed } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import { mappings } from '~/data/mappings';
+import './styles.css'; // Import the separated CSS file
 import { prefixes } from './data/prefixes';
-import { useToast } from '#imports';
 
 const selectedLabels = ref([]);
 const selectedThemeValues = ref([]);
 const deployInput = ref('');
 const hasInvalidInput = ref(false);
+const searchQuery = ref('');
 
 const toast = useToast();
 
-// const mappings = {
-//   "qa-james": { themeValue: "orange", deployValue: "qa-james" },
-//   "qa-qa": { themeValue: "orange", deployValue: "qa-qa" },
-//   "qa-qa2": { themeValue: "orange", deployValue: "qa-qa2" },
-//   "a7billing1-zib": { themeValue: "orange", deployValue: "a7billing1-zib" },
-//   "sob-asc": { themeValue: "green", deployValue: "sob-asc" },
-//   // Add more mappings if necessary
-// };
-
-// Group buttons based on prefixes
-//const prefixes = ['qa-', 'a7', 'sob'];
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      toast.add({ severity: 'success', summary: 'Copied', detail: 'Copied to clipboard', life: 3000 });
+    })
+    .catch(err => {
+      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to copy', life: 3000 });
+    });
+};
 
 const buttonGroups = computed(() => {
   const groups = prefixes.reduce((acc, prefix) => {
@@ -76,7 +94,6 @@ const buttonGroups = computed(() => {
     return acc;
   }, {});
 
-  // Add the OTHER group last
   groups['OTHER'] = Object.keys(mappings)
     .filter(label => !prefixes.some(prefix => label.startsWith(prefix)))
     .map(label => ({
@@ -87,7 +104,23 @@ const buttonGroups = computed(() => {
   return groups;
 });
 
-// Toggle button selection
+const filteredButtonGroups = computed(() => {
+  if (!searchQuery.value) {
+    return buttonGroups.value;
+  }
+
+  const searchLower = searchQuery.value.toLowerCase();
+  return Object.keys(buttonGroups.value).reduce((acc, groupName) => {
+    const filteredButtons = buttonGroups.value[groupName].filter(button =>
+      button.label.toLowerCase().includes(searchLower)
+    );
+    if (filteredButtons.length) {
+      acc[groupName] = filteredButtons;
+    }
+    return acc;
+  }, {});
+});
+
 const toggleLabel = (label) => {
   if (selectedLabels.value.includes(label)) {
     selectedLabels.value = selectedLabels.value.filter(selected => selected !== label);
@@ -96,146 +129,45 @@ const toggleLabel = (label) => {
   }
   updateDeployValues();
   updateSelectedValues();
+  processDeployInput();
 };
 
-// Update deploy values when buttons are clicked
 const updateDeployValues = () => {
   deployInput.value = selectedLabels.value.join(' ');
 };
 
-// Update theme values based on selected labels
 const updateSelectedValues = () => {
   const currentSelectedThemeValues = selectedLabels.value.map(label => mappings[label]?.themeValue);
-
-  const uniqueThemes = new Set();
-  currentSelectedThemeValues.forEach(theme => {
-    if (theme) {
-      uniqueThemes.add(theme); // Add the theme if it exists
-    }
-  });
-
+  const uniqueThemes = new Set(currentSelectedThemeValues);
   selectedThemeValues.value = Array.from(uniqueThemes);
 };
 
-// Watcher to keep the textarea deploy values and selectedLabels in sync
-watch(deployInput, (newValue) => {
-  processDeployInput();
-});
-
-const selectedThemeValuesString = computed(() => {
-  return selectedThemeValues.value.join(' ');
-});
-
-const copyToClipboard = (text) => {
-  navigator.clipboard.writeText(text)
-    .then(() => {
-      toast.add({ severity: 'success', summary: 'Copied to clipboard', life: 3000 });
-    })
-    .catch(err => {
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to copy', life: 3000 });
-    });
-};
-
-// Process input in the deployValues textarea
 const processDeployInput = () => {
-  hasInvalidInput.value = false;
-  
-  // Split the input text into individual values by space or newline
+  hasInvalidInput.value = false; // Reset the invalid state at the beginning
   const deployValues = deployInput.value.trim().split(/\s+/);
+  const selectedValues = []; // Array to hold valid selected values
+  let invalidFound = false; // Flag to track if any invalid values are found
 
-  // Keep track of whether any invalid inputs are found
-  let invalidFound = false;
-
-  // Clear existing selected labels before processing new input
-  selectedLabels.value = [];
-
+  // Loop through the entered values
   deployValues.forEach(value => {
     if (mappings[value]) {
-      // If valid, add to selected labels
-      selectedLabels.value.push(value);
+      selectedValues.push(value); // Push valid values to the array
     } else {
-      // If invalid, mark it
-      invalidFound = true;
+      invalidFound = true; // Set flag if invalid value is found
     }
   });
 
-  hasInvalidInput.value = invalidFound;
-
-  // Update selected values
+  // Update the selected labels and theme values based on valid selections
+  selectedLabels.value = selectedValues; 
   updateSelectedValues();
+
+  // Set the hasInvalidInput state based on whether invalid values were found
+  hasInvalidInput.value = invalidFound; 
 };
+
+const clearSearch = () => {
+  searchQuery.value = '';
+};
+
+const selectedThemeValuesString = computed(() => selectedThemeValues.value.join(' '));
 </script>
-
-<style>
-body {
-  background-color: #121212;
-  color: #ffffff;
-}
-
-.container {
-  display: flex;
-  height: 100vh;
-}
-
-.button-column {
-  flex: 1;
-  padding: 20px;
-  border-right: 1px solid #333;
-  overflow-y: auto;
-  background-color: #1e1e1e;
-}
-
-.output-column {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background-color: #1e1e1e;
-}
-
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-button {
-  padding: 10px 15px;
-  border: 1px solid #007bff;
-  background-color: #333;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background-color 0.3s, border-color 0.3s;
-}
-
-button.selected {
-  background-color: #007bff;
-  border-color: #0056b3;
-  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-button:active {
-  background-color: #004085;
-}
-
-textarea {
-  width: 100%;
-  height: 100px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  background-color: #222;
-  color: #ffffff;
-  border: 1px solid #444;
-  padding: 10px;
-  resize: none;
-}
-
-textarea.invalid-input {
-  border-color: red;
-  color: red;
-}
-</style>
