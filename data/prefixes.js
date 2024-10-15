@@ -1,0 +1,1 @@
+export const prefixes = ['sbb', 'myz','sob', 'tuz', 'sob','mgb', 'mob', 'vwp', 'rhb', 'a7', 'qa', ];
