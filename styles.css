@@ -47,9 +47,9 @@ body {
   }
   
   button.selected {
-    background-color: #007bff;
+    background-color: #044c9a;
     border-color: #0056b3;
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+    
   }
   
   button:hover {

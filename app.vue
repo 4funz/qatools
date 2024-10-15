@@ -7,7 +7,7 @@
         <input
           type="text"
           v-model="searchQuery"
-          placeholder="Search buttons..."
+          placeholder="Search..."
           class="search-input"
         />
         <!-- Clear Search Button ('x' icon) -->
