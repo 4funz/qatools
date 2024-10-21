@@ -7,6 +7,9 @@ export const mappings = {
 "qa-mdlw": { themeValue: "alturos", deployValue: "qa-mdlw" },
 "qa-testio": { themeValue: "alturos", deployValue: "qa-testio" },
 "qa-themes": { themeValue: "alturos", deployValue: "qa-themes" },
+"mdlw-qa-ch2": { themeValue: "alturos", deployValue: "mdlw-qa-ch2" },
+"mdlw-qa": { themeValue: "alturos", deployValue: "mdlw-qa" },
+"mdlw-dev": { themeValue: "alturos", deployValue: "mdlw-dev" },
 "a7billing1-zib": { themeValue: "alturos", deployValue: "a7billing1-zib" },
 "a7billingdev1-zib": { themeValue: "alturos", deployValue: "a7billingdev1-zib" },
 "a7billingqa1-zib": { themeValue: "alturos", deployValue: "a7billingqa1-zib" },
@@ -84,3 +87,7 @@ export const mappings = {
 "htg-htg": { themeValue: "hochschwarzwald", deployValue: "htg-htg" },
 "tegernsee-tegernsee": { themeValue: "tegernsee", deployValue: "tegernsee-tegernsee" },
   };
+
+
+
+  
