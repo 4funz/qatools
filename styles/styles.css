@@ -14,6 +14,16 @@ body {
   height: 100vh; /* Full viewport height */
 }
 
+/* Output column styling */
+.output-column {
+  flex: 1; /* Take up the remaining half of the container */
+  padding: 20px;
+  background-color: #1e1e1e;
+  height: 100vh; /* Full height */
+  overflow-y: auto; /* Makes the right column scrollable */
+  box-sizing: border-box; /* Ensure padding doesn't affect the width */
+}
+
 /* Button column styling */
 .button-column {
   flex: 1;
@@ -27,6 +37,7 @@ body {
 /* Button styles */
 .button-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px; /* Adds space between buttons */
 }
 
